@@ -40,7 +40,7 @@ export const resolveNPMURL = (u: NPMURL) => {
     const r = parseNPMURL(u);
     if (r instanceof Error) return r;
     const { packagename, packagepath } = r;
-    return new URL(
+    return new url.URL(
         "file://" +
         path.join(require.resolve(packagename), packagepath)
     ) as FileURL

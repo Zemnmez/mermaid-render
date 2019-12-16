@@ -37,13 +37,18 @@ export type Config = {
     browser?: Eventually<puppeteer.Browser>
 }
 
+const u = <proto extends string>(proto: proto, u: string): url.URL & { protocol: proto } => {
+    const ret = new url.URL(u);
+    if (ret.protocol != proto) throw new Error(`invalid ${proto} url ${u}`)
+    return ret as (url.URL & {protocol:proto});
+};
 
 export async function renderMermaid(code: string, {
     imports, browser = puppeteer.launch()
 }: Config = {}): string {
     const page = (await Eventually(browser)).newPage();
-    await page.goto(tmpFolder({
-        "mermaid": "npm://mermaid",
-        "fontawesome": "npm://fontawesome"
-    }))
+    (await page).goto((await tmpFolder({
+        "mermaid": u("npm","npm://mermaid"),
+        "fontawesome": u("npm","npm://fontawesome")
+    })).path);
 }

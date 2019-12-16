@@ -1,6 +1,7 @@
 import * as puppeteer from 'puppeteer';
 import url from 'url';
 import { must } from './must';
+import path from 'path';
 
 
 import {
@@ -77,7 +78,10 @@ export async function renderMermaid(code: string, {
         waitUntil: "networkidle2"
     });
 
-    return await page.evaluate(render, code)
+    initParams = await Eventually(initParams);
+    return await page.evaluate(render, JSON.stringify({
+        code, initParams
+    }))
 }
 
 /**

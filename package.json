@@ -15,6 +15,7 @@
   "devDependencies": {
     "@types/mermaid": "^8.2.1",
     "@types/node": "^12.12.17",
-    "@types/puppeteer": "^2.0.0"
+    "@types/puppeteer": "^2.0.0",
+    "@types/tmp": "^0.1.0"
   }
 }

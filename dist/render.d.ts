@@ -2,12 +2,11 @@ import * as puppeteer from 'puppeteer';
 import { FileURL, DataURI, NPMURL } from './tmpFolder';
 import { MermaidAPIConfig } from './mermaid';
 declare type SupportedURLTypes = FileURL | DataURI | NPMURL;
-declare type imports = {
+export declare type imports = {
     javascript: Array<SupportedURLTypes>;
     css: Array<SupportedURLTypes>;
 };
-declare type Eventually<T> = T | Promise<T>;
-declare const Eventually: <T>(v: Eventually<T>) => Promise<T>;
+export declare type Eventually<T> = T | Promise<T>;
 export declare type Config = {
     /**
      * extra css and javascript assets

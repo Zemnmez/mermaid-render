@@ -15,12 +15,12 @@ import { MermaidAPIConfig, render } from './mermaid';
 
 type SupportedURLTypes = FileURL | DataURI | NPMURL
 
-type imports = {
+export type imports = {
     javascript: Array<SupportedURLTypes>,
     css: Array<SupportedURLTypes>
 }
 
-type Eventually<T> = T | Promise<T>;
+export type Eventually<T> = T | Promise<T>;
 
 const Eventually = async <T>(v: Eventually<T>): Promise<T> => 
     v instanceof Promise?

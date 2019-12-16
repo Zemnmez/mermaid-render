@@ -3,6 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import { promisify } from 'util';
 import url from 'url';
+import { must } from './must';
 
 /**
  * used by tmpFolder; represents a file to be linked
@@ -17,16 +18,6 @@ export type FileURL = url.URL & { protocol: "file" };
 export type DataURI = url.URL & { protocol: "data" };
 
 export type NPMURL = url.URL & { protocol: "npm" };
-
-
-const must = <T1,R1>(
-    fn: (arg1: T1) => R1 | Error
-): ((arg1: T1) => R1) => 
-    (a1: T1) => {
-        const resp = fn(a1);
-        if (resp instanceof Error) throw resp;
-        return resp;
-    };
 
     
 export const parseNPMURL = (u: NPMURL) => {

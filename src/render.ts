@@ -1,20 +1,22 @@
 import * as puppeteer from 'puppeteer';
 import url from 'url';
+import { must } from './must';
 
 
 import {
-    tmpFolder, DirKey,
-    FileURL, DataURI
+    tmpFolder,
+    FileURL, DataURI, NPMURL, resolveNPMURL
 } from './tmpFolder';
+import { MermaidAPIConfig, render } from './mermaid';
 
 
 
 
-type SupportedURLTypes = DirKey | NPMURL
+type SupportedURLTypes = FileURL | DataURI | NPMURL
 
 type imports = {
-    javascript: SupportedURLTypes,
-    css: SupportedURLTypes
+    javascript: Array<SupportedURLTypes>,
+    css: Array<SupportedURLTypes>
 }
 
 type Eventually<T> = T | Promise<T>;
@@ -34,7 +36,12 @@ export type Config = {
     /**
      * an existing puppeteer browser to use
      */
-    browser?: Eventually<puppeteer.Browser>
+    browser?: Eventually<puppeteer.Browser>,
+
+    /**
+     * extra params to initialize mermaid with
+     */
+    initParams?: Eventually<MermaidAPIConfig>
 }
 
 const u = <proto extends string>(proto: proto, u: string): url.URL & { protocol: proto } => {
@@ -43,12 +50,66 @@ const u = <proto extends string>(proto: proto, u: string): url.URL & { protocol:
     return ret as (url.URL & {protocol:proto});
 };
 
+export const baseImports: imports = {
+    javascript: [
+        u("npm","npm://mermaid/dist/mermaid.min.js")
+    ],
+    css: []
+}
+
 export async function renderMermaid(code: string, {
-    imports, browser = puppeteer.launch()
-}: Config = {}): string {
-    const page = (await Eventually(browser)).newPage();
-    (await page).goto((await tmpFolder({
-        "mermaid": u("npm","npm://mermaid"),
-        "fontawesome": u("npm","npm://fontawesome")
-    })).path);
+    imports = baseImports, browser = puppeteer.launch(),
+    initParams = {}
+}: Config = {}): Promise<string> {
+
+    imports = await Eventually(imports);
+    
+    imports = imports == baseImports?
+        imports: {
+            javascript: [...imports.javascript, ...baseImports.javascript],
+            css: [...imports.css, ...baseImports.css]
+        };
+
+
+    const page = await (await Eventually(browser)).newPage();
+
+    await page.goto((await makeRenderRig(imports)).toString(), {
+        waitUntil: "networkidle2"
+    });
+
+    return await page.evaluate(render, code)
+}
+
+/**
+ * Builds an HTML file with the given javascript and css
+ * assets. Places it in a temporary folder. Returns the
+ * HTML file. Any NPM URIs are resolved to the file they
+ * refer to. File and folder are destroyed on process exit.
+ * @returns a FileURL of the synthetic HTML file
+ */
+const makeRenderRig = async ({ javascript, css }: imports):
+ Promise<FileURL> => {
+    const [js, style] = [javascript, css].map(
+        list => list.map(
+            (uri) => 
+                uri.protocol != "npm"?
+                    uri:
+                    must(resolveNPMURL)(uri)
+        )
+    );
+
+    const htmlCode =
+`<!DOCTYPE HTML>
+<title>mermaid renderer</title>
+${style.map(url => `<link rel="stylesheet" type="text/css" href="${encodeURIComponent(`${url}`)}"/>`)}
+${js.map(url => `<script src="${encodeURIComponent(`${url}`)}"></script>`).join("\n")}
+<div id="render"></div>`;
+
+    const indexHTMLName = "index.html";
+    const { path: folderPath } = await tmpFolder({
+        [indexHTMLName]:
+            u("data", `data:text/html;base64,${atob(htmlCode)}`)
+    });
+
+    return u("file", `file://${path.join(folderPath, indexHTMLName)}`)
 }

@@ -8,7 +8,7 @@ test("should render an svg from code", async () => {
          "Time spent watching it" : 10`, {
             browser: puppeteer.launch({
                     // so it works on wsl
-                    args:['--no-sandbox']
+                    args: ['--no-sandbox']
             })
         }
     );

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "render mermaid diagrams outside of the browser using puppeteer",
   "main": "dist/index.js",
-  "repository": "git@github.com:Zemnmez/mermaid-render.git",
+  "repository": "https://github.com/Zemnmez/mermaid-render",
   "author": "thomas shadwell <thomas.shadwell@googlemail.com>",
   "license": "MIT",
   "dependencies": {

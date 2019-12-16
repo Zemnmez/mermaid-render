@@ -41,7 +41,7 @@ export type Config = {
 
 export const baseImports: imports = {
     javascript: [
-        must(NpmUri)("npm:mermaid/dist/mermaid.min.js")
+        must(NpmUri)("npm:mermaid/../mermaid.min.js")
     ],
     css: []
 }
@@ -62,6 +62,9 @@ export async function renderMermaid(code: string, {
 
     const page = await (await Eventually(browser)).newPage();
 
+    page.on("pageerror", err => console.error("browser error: ", err));
+    page.on("error", err => console.error("browser error: ", err));
+
     const indexURL = uriToString(await makeRenderRig(imports));
 
     try {
@@ -71,28 +74,22 @@ export async function renderMermaid(code: string, {
 
         initParams = await Eventually(initParams);
 
-        console.log(await page.evaluate(() => {
-            const wnd = window as any;
-            return (wnd.document.documentElement)
-                .innerHTML;
-        }))
-
         return await page.evaluate(async (d: string) => {
             // gotta override the window here
             // because it's being executed in a totally
             // different environment.
             const wnd = (window as any as Window & {
-                mermaidAPI: typeof MermaidAPI
+                mermaid: { mermaidAPI: typeof MermaidAPI }
             });
 
             const { initParams, code } = JSON.parse(
                 d
             ) as {initParams: MermaidAPI.Config, code: string};
 
-            wnd.mermaidAPI.initialize(initParams);
+            wnd.mermaid.mermaidAPI.initialize(initParams);
 
             return await new Promise<string>((ok) =>
-                    wnd.mermaidAPI.render('render', code, ok));
+                    wnd.mermaid.mermaidAPI.render('render', code, ok));
         }, JSON.stringify({
             code, initParams
         }))
@@ -122,9 +119,10 @@ const makeRenderRig = async ({ javascript, css }: imports):
     const htmlCode =
 `<!DOCTYPE HTML>
 <title>mermaid renderer</title>
+<div id="render"></div>
 ${style.map(uri => `<link rel="stylesheet" type="text/css" href="${uriToString(uri)}"/>`)}
 ${js.map(uri => `<script src="${uriToString(uri)}"></script>`).join("\n")}
-<div id="render"></div>`;
+`;
 
     const indexHTMLName = "index.html";
     const { path: folderPath } = await tmpFolder({

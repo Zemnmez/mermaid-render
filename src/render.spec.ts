@@ -13,5 +13,8 @@ test("should render an svg from code", async () => {
         }
     );
 
+    // pick up error stragglers
+    //await new Promise((ok) => setTimeout(ok, 10000))
+
     expect(svg).toMatch(/svg/g);
 })

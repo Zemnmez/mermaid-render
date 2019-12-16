@@ -36,7 +36,7 @@ export const parseNpmUri = (u: NpmUri) => {
     // remove leading "/".
     const match = /^(@\w+\/\w+|\w+)(?:\/(.*))?$/.exec(u.path??"");
     if (!match) return new Error(`invalid npm uri ${u.path}`);
-    const [ , packagename, packagepath ] = match;
+    const [ , packagename = "", packagepath = "" ] = match;
     return { packagename, packagepath }
 }
 

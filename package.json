@@ -24,6 +24,7 @@
   },
   "scripts": {
     "transpile": "tsc",
-    "test": "jest"
+    "test": "jest",
+    "node": "node"
   }
 }

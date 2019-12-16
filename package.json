@@ -10,12 +10,20 @@
     "mermaid": "^8.4.4",
     "puppeteer": "^2.0.0",
     "tmp-promise": "^2.0.2",
-    "typescript": "^3.7.3"
+    "uri-js": "^4.2.2"
   },
   "devDependencies": {
+    "@types/jest": "^24.0.23",
     "@types/mermaid": "^8.2.1",
     "@types/node": "^12.12.17",
     "@types/puppeteer": "^2.0.0",
-    "@types/tmp": "^0.1.0"
+    "@types/tmp": "^0.1.0",
+    "jest": "^24.9.0",
+    "ts-jest": "^24.2.0",
+    "typescript": "^3.7.3"
+  },
+  "scripts": {
+    "transpile": "tsc",
+    "test": "jest"
   }
 }

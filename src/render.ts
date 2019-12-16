@@ -1,19 +1,13 @@
-import * as puppeteer from 'puppeteer';
-import url from 'url';
+import puppeteer from 'puppeteer';
 import { must } from './must';
 import path from 'path';
 
 
-import {
-    tmpFolder,
-    FileURL, DataURI, NPMURL, resolveNPMURL
-} from './tmpFolder';
-import { MermaidAPIConfig, render } from './mermaid';
+import { tmpFolder, } from './tmpFolder';
+import { FileUri, DataUri, NpmUri, resolveNpmUri, uriToString } from './uri';
+import MermaidAPI from 'mermaid/mermaidAPI';
 
-
-
-
-type SupportedURLTypes = FileURL | DataURI | NPMURL
+type SupportedURLTypes = FileUri | DataUri | NpmUri
 
 export type imports = {
     javascript: Array<SupportedURLTypes>,
@@ -42,18 +36,12 @@ export type Config = {
     /**
      * extra params to initialize mermaid with
      */
-    initParams?: Eventually<MermaidAPIConfig>
+    initParams?: Eventually<MermaidAPI.Config>
 }
-
-const u = <proto extends string>(proto: proto, u: string): url.URL & { protocol: proto } => {
-    const ret = new url.URL(u);
-    if (ret.protocol != proto) throw new Error(`invalid ${proto} url ${u}`)
-    return ret as (url.URL & {protocol:proto});
-};
 
 export const baseImports: imports = {
     javascript: [
-        u("npm","npm://mermaid/dist/mermaid.min.js")
+        must(NpmUri)("npm:mermaid/dist/mermaid.min.js")
     ],
     css: []
 }
@@ -74,14 +62,43 @@ export async function renderMermaid(code: string, {
 
     const page = await (await Eventually(browser)).newPage();
 
-    await page.goto((await makeRenderRig(imports)).toString(), {
-        waitUntil: "networkidle2"
-    });
+    const indexURL = uriToString(await makeRenderRig(imports));
 
-    initParams = await Eventually(initParams);
-    return await page.evaluate(render, JSON.stringify({
-        code, initParams
-    }))
+    try {
+        await page.goto(indexURL, {
+            waitUntil: "networkidle2"
+        });
+
+        initParams = await Eventually(initParams);
+
+        console.log(await page.evaluate(() => {
+            const wnd = window as any;
+            return (wnd.document.documentElement)
+                .innerHTML;
+        }))
+
+        return await page.evaluate(async (d: string) => {
+            // gotta override the window here
+            // because it's being executed in a totally
+            // different environment.
+            const wnd = (window as any as Window & {
+                mermaidAPI: typeof MermaidAPI
+            });
+
+            const { initParams, code } = JSON.parse(
+                d
+            ) as {initParams: MermaidAPI.Config, code: string};
+
+            wnd.mermaidAPI.initialize(initParams);
+
+            return await new Promise<string>((ok) =>
+                    wnd.mermaidAPI.render('render', code, ok));
+        }, JSON.stringify({
+            code, initParams
+        }))
+    } catch (e) {
+        throw new Error(`${indexURL}: ${e}`);
+    }
 }
 
 /**
@@ -89,31 +106,32 @@ export async function renderMermaid(code: string, {
  * assets. Places it in a temporary folder. Returns the
  * HTML file. Any NPM URIs are resolved to the file they
  * refer to. File and folder are destroyed on process exit.
- * @returns a FileURL of the synthetic HTML file
+ * @returns a FileUri of the synthetic HTML file
  */
 const makeRenderRig = async ({ javascript, css }: imports):
- Promise<FileURL> => {
+ Promise<FileUri> => {
     const [js, style] = [javascript, css].map(
         list => list.map(
             (uri) => 
-                uri.protocol != "npm"?
+                uri.scheme != "npm"?
                     uri:
-                    must(resolveNPMURL)(uri)
+                    must(resolveNpmUri)(uri)
         )
     );
 
     const htmlCode =
 `<!DOCTYPE HTML>
 <title>mermaid renderer</title>
-${style.map(url => `<link rel="stylesheet" type="text/css" href="${encodeURIComponent(`${url}`)}"/>`)}
-${js.map(url => `<script src="${encodeURIComponent(`${url}`)}"></script>`).join("\n")}
+${style.map(uri => `<link rel="stylesheet" type="text/css" href="${uriToString(uri)}"/>`)}
+${js.map(uri => `<script src="${uriToString(uri)}"></script>`).join("\n")}
 <div id="render"></div>`;
 
     const indexHTMLName = "index.html";
     const { path: folderPath } = await tmpFolder({
         [indexHTMLName]:
-            u("data", `data:text/html;base64,${atob(htmlCode)}`)
+            must(DataUri)(`data:text/html;base64,${btoa(htmlCode)}`)
     });
 
-    return u("file", `file://${path.join(folderPath, indexHTMLName)}`)
+    return must(FileUri)
+        (`file://${path.join(folderPath, indexHTMLName)}`);
 }

@@ -2,40 +2,10 @@ import { dir } from 'tmp-promise';
 import path from 'path';
 import fs from 'fs';
 import { promisify } from 'util';
-import url from 'url';
 import { must } from './must';
+import { DataUri, FileUri, NpmUri,
+    resolveNpmUri, extractDataUriData } from './uri';
 
-/**
- * used by tmpFolder; represents a file to be linked
- * @example new URL("file://index.html")
- */
-export type FileURL = url.URL & { protocol: "file" };
-
-/**
- * used by tmpFolder; represents a file
- * to be created with given content
- */
-export type DataURI = url.URL & { protocol: "data" };
-
-export type NPMURL = url.URL & { protocol: "npm" };
-
-    
-export const parseNPMURL = (u: NPMURL) => {
-    const match = /^(@\w+\/\w+|\w+)(?:\/(.*))?/.exec(u.pathname);
-    if (!match) return new Error("invalid npm url");
-    const [ packagename, packagepath ] = match;
-    return { packagename, packagepath }
-}
-
-export const resolveNPMURL = (u: NPMURL) => {
-    const r = parseNPMURL(u);
-    if (r instanceof Error) return r;
-    const { packagename, packagepath } = r;
-    return new url.URL(
-        "file://" +
-        path.join(require.resolve(packagename), packagepath)
-    ) as FileURL
-}
 
 /**
  * Used by tmpFolder; represents
@@ -46,20 +16,8 @@ export const resolveNPMURL = (u: NPMURL) => {
       * values can be a Dir object,
       * or a data: or file:// uri string
       */
-     [name: string]: Dir | DataURI | FileURL | NPMURL
+     [name: string]: Dir | DataUri | FileUri | NpmUri
  }
-
-const extractDataURIData = (dataURI: DataURI) => {
-    const component = dataURI.href.slice(dataURI.protocol.length);
-    const match = /^(base64;)?(.*)$/.exec(component);
-    if (!match) return new Error("not a valid data uri");
-
-    const [base64Component, rest] = match;
-    const data = base64Component?
-        atob(rest): rest;
-
-    return data;
-}
 
 /**
  * tmpFolder creates a folder structure based on the input object.
@@ -102,28 +60,39 @@ export async function tmpFolder(filesystem: Readonly<Dir>) {
                     root, filename
                 );
 
-                // (source is dir)
-                if (!(source instanceof url.URL)) { 
-                    await promisify(fs.mkdir)(destination);
-                    return void await writeTmpFolder(
-                        destination,
-                        source,
-                        depth + 1
-                    );
+                type sourceT = typeof source;
+
+                const handleSource = async (source: sourceT): Promise<undefined> => {
+                    switch (source.scheme) {
+                    case "data": 
+                        return void await promisify(fs.writeFile)
+                            (destination, <string>
+                                 must(extractDataUriData)(source));
+                    case "npm":
+                        return handleSource(
+                            <FileUri> must(resolveNpmUri)
+                                (<NpmUri> source));
+
+                    case "file":
+                        if (!source.path)
+                            throw new Error(`cannot link ${source};`+
+                                `path "${source.path}" is blank`);
+
+                        return void await promisify(fs.link)
+                            (source.path, destination);
+
+                    // (source is dir)
+                    default:
+                        await promisify(fs.mkdir)(destination);
+                        return void await writeTmpFolder(
+                            destination,
+                            <Dir> source,
+                            depth + 1
+                        );
+                    }
                 }
 
-                switch (source.protocol) {
-                case "data": 
-                    return void await promisify(fs.writeFile)
-                        (destination,
-                            must(extractDataURIData)(source) as string);
-                case "npm":
-                    return void await promisify(fs.link)
-                        (must(resolveNPMURL)(source).pathname, destination);
-                case "file":
-                    return void await promisify(fs.link)
-                        (source.pathname, destination);
-                }
+                return handleSource(source);
             }
         ));
 

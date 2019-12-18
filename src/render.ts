@@ -6,6 +6,7 @@ import path from 'path';
 import { tmpFolder, } from './tmpFolder';
 import { FileUri, DataUri, NpmUri, resolveNpmUri, uriToString } from './uri';
 import MermaidAPI from 'mermaid/mermaidAPI';
+import btoa from 'btoa';
 
 type SupportedURLTypes = FileUri | DataUri | NpmUri
 

@@ -8,12 +8,14 @@
   "license": "MIT",
   "dependencies": {
     "@types/mermaid": "^8.2.1",
+    "btoa": "^1.2.1",
     "mermaid": "^8.4.4",
     "puppeteer": "^2.0.0",
     "tmp-promise": "^2.0.2",
     "uri-js": "^4.2.2"
   },
   "devDependencies": {
+    "@types/btoa": "^1.2.3",
     "@types/jest": "^24.0.23",
     "@types/node": "^12.12.17",
     "@types/puppeteer": "^2.0.0",
@@ -26,5 +28,8 @@
     "transpile": "tsc",
     "test": "jest",
     "node": "node"
+  },
+  "engines": {
+    "node": ">=10.0.0"
   }
 }

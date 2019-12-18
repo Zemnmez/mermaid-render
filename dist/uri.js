@@ -12,6 +12,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const path_1 = __importDefault(require("path"));
 const uri = __importStar(require("uri-js"));
+const atob_1 = __importDefault(require("atob"));
 exports.uriToString = uri.serialize;
 exports.uriWithScheme = (scheme) => (u) => {
     if (typeof (u) == "string")
@@ -50,7 +51,7 @@ exports.extractDataUriData = (dataUri) => {
         return new Error(`not a valid data uri ${dataUri}`);
     const [, , base64Component, rest] = match;
     const data = base64Component ?
-        atob(rest) : rest;
+        atob_1.default(rest) : rest;
     return data;
 };
 //# sourceMappingURL=uri.js.map

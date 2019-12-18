@@ -1,6 +1,6 @@
 {
   "name": "mermaid-render",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "render mermaid diagrams outside of the browser using puppeteer",
   "main": "dist/index.js",
   "repository": "https://github.com/Zemnmez/mermaid-render",

@@ -8,6 +8,7 @@ const must_1 = require("./must");
 const path_1 = __importDefault(require("path"));
 const tmpFolder_1 = require("./tmpFolder");
 const uri_1 = require("./uri");
+const btoa_1 = __importDefault(require("btoa"));
 const Eventually = async (v) => v instanceof Promise ?
     await v : v;
 exports.baseImports = {
@@ -92,7 +93,7 @@ ${js.map(uri => `<script src="${uri_1.uriToString(uri)}"></script>`).join("\n")}
 `;
     const indexHTMLName = "index.html";
     const { path: folderPath } = await tmpFolder_1.tmpFolder({
-        [indexHTMLName]: must_1.must(uri_1.DataUri)(`data:text/html;base64,${btoa(htmlCode)}`)
+        [indexHTMLName]: must_1.must(uri_1.DataUri)(`data:text/html;base64,${btoa_1.default(htmlCode)}`)
     });
     return must_1.must(uri_1.FileUri)(`file://${path_1.default.join(folderPath, indexHTMLName)}`);
 };

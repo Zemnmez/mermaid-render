@@ -30,7 +30,7 @@
     "transpile": "tsc",
     "test": "jest",
     "node": "node",
-    "Publish": "yarn jest && yarn transpile && yarn publish"
+    "Publish": "yarn jest && git add -A && yarn transpile && yarn publish"
   },
   "engines": {
     "node": ">=10.0.0"

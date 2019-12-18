@@ -1,5 +1,6 @@
 import { parseNpmUri, NpmUri, DataUri, extractDataUriData } from "./uri";
 import { must as regularMust } from "./must";
+import btoa from 'btoa';
 
 const must = <T1, R1>(
     f: (arg1: T1) => R1 | Error

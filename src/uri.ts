@@ -1,5 +1,6 @@
 import path from 'path';
 import * as uri from 'uri-js'
+import atob from 'atob';
 
 export const uriToString = uri.serialize;
 

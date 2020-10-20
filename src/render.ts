@@ -124,6 +124,8 @@ export async function renderMermaid(code: string, {
         }))
     } catch (e) {
         throw new Error(`${indexURL}: ${e}`);
+    } finally {
+        await (await Eventually(browser)).close();
     }
 }
 

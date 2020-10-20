@@ -72,6 +72,9 @@ async function renderMermaid(code, { imports = exports.baseImports, browser = pu
     catch (e) {
         throw new Error(`${indexURL}: ${e}`);
     }
+    finally {
+        await (await Eventually(browser)).close();
+    }
 }
 exports.renderMermaid = renderMermaid;
 /**

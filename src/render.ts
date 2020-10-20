@@ -161,6 +161,8 @@ ${js.map(uri => `<script src="${uriToString(uri)}"></script>`).join("\n")}
             must(DataUri)(`data:text/html;base64,${btoa(htmlCode)}`)
     });
 
-    return must(FileUri)
+    const target = must(FileUri)
         (`file://${path.join(folderPath, indexHTMLName)}`);
+
+    return target;
 }

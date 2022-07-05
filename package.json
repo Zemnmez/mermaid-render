@@ -10,7 +10,7 @@
     "@types/mermaid": "^8.2.1",
     "atob": "^2.1.2",
     "btoa": "^1.2.1",
-    "mermaid": "^8.4.4",
+    "mermaid": "^9.1.2",
     "puppeteer": "^2.0.0",
     "tmp-promise": "^2.0.2",
     "uri-js": "^4.2.2"
